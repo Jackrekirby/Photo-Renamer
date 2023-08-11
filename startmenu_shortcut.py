@@ -9,7 +9,7 @@ directory = os.path.dirname(os.path.abspath(__file__))
 start_menu = os.path.join(winshell.start_menu(), "Programs")
 shortcut_path = os.path.join(start_menu, "Photo Renamer.lnk")
 executable_path = os.path.join(directory, "dist", "main.exe")
-working_path = directory
+working_path = os.path.dirname(executable_path)
 icon_path = os.path.join(directory, "icon.ico")
 
 shell = Dispatch("WScript.Shell")

@@ -1,7 +1,7 @@
 import tkinter as tk
 import customtkinter as ctk
 from os import listdir, rename
-from os.path import isfile, join, splitext, isdir
+from os.path import isfile, join, splitext, isdir, exists
 from datetime import datetime
 from exif import Image as exifImage
 import subprocess
@@ -9,6 +9,7 @@ import time
 from PIL import Image
 
 # pyinstaller --onefile --noconsole main.py
+icon_file = "icon.ico"
 
 
 def app(pad: int, ipad: int):
@@ -16,7 +17,8 @@ def app(pad: int, ipad: int):
     root = ctk.CTk()
 
     root.title("Photo Renamer")
-    root.iconbitmap("icon.ico")
+    icon_path = icon_file if exists(icon_file) else join("dist", icon_file)
+    root.iconbitmap(icon_path)
 
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
