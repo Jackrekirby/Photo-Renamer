@@ -35,7 +35,9 @@ def app(pad: int, ipad: int):
     def prompt_directory():
         directory = tk.filedialog.askdirectory()
         if not isdir(directory):
+            show_error("Invalid Directory", "Please select a valid directory.")
             return
+
         button_select_directory.configure(text=directory)
 
         filenames = [
@@ -60,8 +62,8 @@ def app(pad: int, ipad: int):
                     exif_image.get("datetime_original"), "%Y:%m:%d %H:%M:%S"
                 ).strftime("%d %b %Y %Hh%Mm%Ss")
             except Exception as e:
-                print("Error whilst previewing photos", e)
                 created_time = "unknown"
+                show_error("Error", f"Error while processing {filename}: {str(e)}")
 
             image = Image.open(full_path)
             tkimage = ctk.CTkImage(image, size=(16, 16))
@@ -79,10 +81,12 @@ def app(pad: int, ipad: int):
             label_new_name.pack(side=tk.RIGHT, padx=pad)
 
             elapsed = time.time() - start_time
-            if elapsed > 0.5:  # update ui every 0.5 seconds
+            if elapsed > 0.5:  # update UI every 0.5 seconds
                 start_time = 0
                 root.update()
                 root.update_idletasks()
+
+            image.close()
 
     def goto_directory():
         directory: str = button_select_directory.cget("text")
@@ -101,21 +105,35 @@ def app(pad: int, ipad: int):
         for i, filename in enumerate(filenames):
             full_path = join(directory, filename)
 
-            image = exifImage(full_path)
+            try:
+                exif_image = exifImage(full_path)
 
-            created_time = datetime.strptime(
-                image.get("datetime_original"), "%Y:%m:%d %H:%M:%S"
-            ).strftime("%d %b %Y %Hh%Mm%Ss")
+                created_time = datetime.strptime(
+                    exif_image.get("datetime_original"), "%Y:%m:%d %H:%M:%S"
+                ).strftime("%d %b %Y %Hh%Mm%Ss")
+            except Exception as e:
+                created_time = "unknown"
+                show_error("Error", f"Error while processing {filename}: {str(e)}")
+                continue # skip image and try and rename others
+
             name, ext = splitext(filename)
             new_filename = str(created_time) + ext
-            rename(full_path, join(directory, new_filename))
+            try:
+                rename(full_path, join(directory, new_filename))
+            except Exception as e:
+                show_error("Error", f"Error while renaming {filename} to {new_filename}: {str(e)}")
+                continue # if file cannot be renamed it is probably open
+            
             progressbar.set((i + 1) / imax)
             label_progress.configure(text=f"{i} / {imax}")
             root.update()
             root.update_idletasks()
-            time.sleep(0.05)
+            time.sleep(3 / imax)
 
         label_progress.configure(text="Done")
+
+    def show_error(title, message):
+        tk.messagebox.showerror(title, message)
 
     frame_button_row = ctk.CTkFrame(
         master=root,  # fg_color="transparent"
